@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Managment</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Patient Details</h1>
+    <div id="patient-details">
+        <p>Loading...</p>
+    </div>
+    <div class="patient-details-btn-container">
+        <button id="delete-btn" onclick="deletePatient()" >Delete</button>
+        <button id="update-btn" onclick="editPopup()">Update</button>
+    <div>
+    
+    <!-- Edit Patient Popup -->
+    <div id="edit-patient-popup" class="popup">
+        <span class="popup-close" onclick="closePopup('edit-patient-popup')">X</span>
+        <h3>Edit Patient</h3>
+        <input type="text" id="edit-patient-allergies" placeholder="Allergies">
+        <input type="text" id="edit-patient-prescriptions" placeholder="Prescriptions">
+        <input type="text" id="edit-patient-height" placeholder="Height">
+        <input type="text" id="edit-patient-weight" placeholder="Weight">
+        <input type="text" id="edit-patient-notes" placeholder="Notes">
+        <input type="text" id="edit-patient-diagnosis" placeholder="Diagnosis">
+        <button onclick="updatePatient()">Update</button>
+    </div>
+
+<script>
+        // Utility function to get query parameters
+        function getQueryParameter(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        // Fetch and display patient details in a table
+        async function loadPatientDetails() {
+            const patientId = getQueryParameter('id');
+
+            if (!patientId) {
+                document.getElementById('patient-details').innerHTML = `
+                    <p class="error">Patient ID is missing in the URL.</p>`;
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token'); // Authentication token
+                const response = await fetch(`/api/patients/${patientId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const patient = await response.json();
+                    document.getElementById('patient-details').innerHTML = `
+                    <!-- Personal Information Table -->
+                        <h2 class="patient-details-h2">Personal Information</h2>
+                        <table id="patient-details-table">
+                            <tr>
+                                <th>Personal Info</th>
+                                <th></th>
+                            </tr>
+                            <tr>
+                                <td>First Name</td>
+                                <td>${patient.FirstName}</td>
+                            </tr>
+                            <tr>
+                                <td>Last Name</td>
+                                <td>${patient.LastName}</td>
+                            </tr>
+                            <tr>
+                                <td>Date of Birth</td>
+                                <td>${patient.DateOfBirth}</td>
+                            </tr>
+                            <tr>
+                                <td>Gender</td>
+                                <td>${patient.Gender}</td>
+                            </tr>
+                            <tr>
+                                <td>Phone Number</td>
+                                <td>${patient.PhoneNumber}</td>
+                            </tr>
+                            <tr>
+                                <td>Address</td>
+                                <td>${patient.Address}</td>
+                            </tr>
+                        </table>
+
+                        <!-- Medical Information Table -->
+                        <h2>Medical Information</h2>
+                        <table>
+                            <tr>
+                                <th>Medical Info</th>
+                                <th></th>
+                            </tr>
+                            <tr>
+                                <td>Allergies</td>
+                                <td>${patient.Allergies || 'None'}</td>
+                            </tr>
+                            <tr>
+                                <td>Prescriptions</td>
+                                <td>${patient.Prescriptions || 'None'}</td>
+                            </tr>
+                            <tr>
+                                <td>Height</td>
+                                <td>${patient.Height || 'N/A'} cm</td>
+                            </tr>
+                            <tr>
+                                <td>Weight</td>
+                                <td>${patient.Weight || 'N/A'} kg</td>
+                            </tr>
+                            <tr>
+                                <td>Diagnosis</td>
+                                <td>${patient.Diagnosis || 'N/A'}</td>
+                            </tr>
+                            <tr>
+                                <td>Notes</td>
+                                <td>${patient.Notes || 'None'}</td>
+                            </tr>
+                        </table>`;
+                } else {
+                    document.getElementById('patient-details').innerHTML = `
+                        <p class="error">Failed to fetch patient details. Please try again.</p>`;
+                }
+            } catch (error) {
+                console.error('Error fetching patient details:', error);
+                document.getElementById('patient-details').innerHTML = `
+                    <p class="error">An error occurred while fetching patient details.</p>`;
+            }
+        }
+
+        // Load the patient details when the page loads
+        window.onload = loadPatientDetails;
+
+
+    async function deletePatient() {
+    const patientId = getQueryParameter('id'); // Get patient ID from the URL
+    if (!patientId) {
+        alert("Patient ID is missing in the URL.");
+        return;
+    }
+
+    if (confirm("Are you sure you want to delete this patient record?")) {
+        try {
+            const response = await fetch(`/api/patients/${patientId}`, {
+                method: 'DELETE',
+            });
+
+            if (response.ok) {
+                alert(`Patient record with ID ${patientId} has been deleted.`);
+                window.location.href = 'homepage.html';
+            } else {
+                const errorText = await response.text();
+                alert(`Error: ${errorText}`);
+            }
+        } catch (error) {
+            console.error('Error deleting patient:', error);
+            alert('An error occurred while deleting the patient record.');
+            }
+        }
+    }
+
+    //Update form dialogue
+    async function editPopup() {
+    const patientId = getQueryParameter('id');
+    if (!patientId) {
+        alert("Patient ID is missing in the URL.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/patients/${patientId}`);
+        if (!response.ok) {
+            alert('Patient not found');
+            return;
+        }
+
+        const patient = await response.json();
+
+        //Patient's current medical info
+        document.getElementById('edit-patient-allergies').value = patient.Allergies;
+        document.getElementById('edit-patient-prescriptions').value = patient.Prescriptions;
+        document.getElementById('edit-patient-height').value = patient.Height;
+        document.getElementById('edit-patient-weight').value = patient.Weight;
+        document.getElementById('edit-patient-notes').value = patient.Notes;
+        document.getElementById('edit-patient-diagnosis').value = patient.Diagnosis;
+
+        //Open the popup (show the div)
+        document.getElementById('edit-patient-popup').style.display = 'block';
+    } catch (error) {
+        console.error('Error fetching patient data:', error);
+        alert('An error occurred while fetching patient data.');
+    }
+}
+
+    //Function to update patient details
+    async function updatePatient() {
+        const patientId = getQueryParameter('id'); 
+
+        //Collect new data
+        const updatedData = {
+            PatientId: patientId,
+            Allergies: document.getElementById('edit-patient-allergies').value,
+            Prescriptions: document.getElementById('edit-patient-prescriptions').value,
+            Height: document.getElementById('edit-patient-height').value,
+            Weight: document.getElementById('edit-patient-weight').value,
+            Notes: document.getElementById('edit-patient-notes').value,
+            Diagnosis: document.getElementById('edit-patient-diagnosis').value
+        };
+
+        try {
+            const token = localStorage.getItem('token'); // Authentication token
+            const response = await fetch(`/api/patients/${patientId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify(updatedData)
+            });
+
+            if (response.ok) {
+                alert('Patient details have been updated successfully.');
+                closePopup('edit-patient-popup'); // Close the popup after update
+                loadPatientDetails(); // Optionally reload the updated details
+            } else {
+                alert('Failed to update patient details.');
+            }
+        } catch (error) {
+            console.error('Error updating patient:', error);
+            alert('An error occurred while updating patient details.');
+        }
+    }
+
+    //Close the popup
+    function closePopup(popupId) {
+        document.getElementById(popupId).style.display = 'none';
+    }
+
+</script>
+</body>
+</html>

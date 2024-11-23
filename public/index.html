@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Managment</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Patient Managment</h1>
+    <div class="container">
+        <div id="login-area">
+            <button id="login-button">Login...</button>
+        </div>
+    
+    <!-- Login Popup -->
+    <div id="login-popup" class="popup">
+        <span class="popup-close" onclick="closePopup('login-popup')">X</span>
+        <h3>Login</h3>
+        <input type="Email" id="login-Email" placeholder="Email">
+        <input type="Password" id="login-Password" placeholder="Password">
+        <button onclick="login()">Login</button>
+    </div>
+
+    <script>
+        // Open and Close Popups
+        document.getElementById('login-button').addEventListener('click', () => openPopup('login-popup'));
+
+        function openPopup(popupId) {
+            document.getElementById(popupId).classList.add('active');
+        }
+
+        function closePopup(popupId) {
+            document.getElementById(popupId).classList.remove('active');
+        }
+
+        // Login Functionality
+        async function login() {
+    const Email = document.getElementById('login-Email').value;
+    const Password = document.getElementById('login-Password').value;
+
+    try {
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json', // Ensure proper header
+            },
+            body: JSON.stringify({ Email, Password }), // Send credentials as JSON
+        });
+
+        if (response.ok) {
+            // Parse the JSON response
+            const data = await response.json();
+
+            // Store token and user information in localStorage
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('FirstName', data.FirstName);
+            localStorage.setItem('LastName', data.LastName);
+
+            // Update the login area to show user's name
+           // document.getElementById('login-area').innerHTML = `
+           //     <p>Welcome, ${data.FirstName} ${data.LastName}</p>
+           // `
+
+            window.location.href = 'homepage.html';
+            ;
+
+            // Optionally, close the login popup
+            closePopup('login-popup');
+        } else {
+            // If login fails, handle the error
+            const errorText = await response.text();
+            alert(`Login failed: ${errorText}`);
+        }
+    } catch (error) {
+        console.error('Error during login:', error);
+        alert('An error occurred. Please try again.');
+    }
+}
+
+    </script>
+</body>
+</html>

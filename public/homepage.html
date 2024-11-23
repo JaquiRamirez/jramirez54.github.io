@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Managment</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Patient Managment</h1>
+    
+    <div>
+        <div id="search-area">
+            <input type="text" id="search-first-name" placeholder="First Name">
+            <input type="text" id="search-last-name" placeholder="Last Name">
+            <button id="search-submit">Search</button>
+        </div>
+    </div>
+
+    <table id="search-results">
+        <thead>
+            <tr>
+                <th>First Name</th>
+                <th>Last Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Results will be dynamically added here -->
+        </tbody>
+    </table>
+
+    <button id="new-patient-button">New Patient...</button>
+    </div>
+
+<!-- New Patient Popup -->
+    <div id="new-patient-popup" class="popup">
+        <span class="popup-close" onclick="closePopup('new-patient-popup')">X</span>
+        <h3>New Patient</h3>
+        <input type="text" id="patient-first-name" placeholder="First Name">
+        <input type="text" id="patient-last-name" placeholder="Last Name">
+        <input type="date" id="patient-dob" placeholder="Date of Birth">
+        <select id="patient-gender">
+            <option value="" disabled selected>Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+        </select>
+        <input type="text" id="patient-phone" placeholder="Phone Number">
+        <input type="text" id="patient-address" placeholder="Address">
+        <input type="text" id="patient-allergies" placeholder="Allergies">
+        <input type="text" id="patient-prescritptions" placeholder="Prescriptions">
+        <input type="text" id="patient-height" placeholder="Height">
+        <input type="text" id="patient-weight" placeholder="Weight">
+        <input type="text" id="patient-notes" placeholder="Notes">
+        <input type="text" id="patient-diagnosis" placeholder="Diagnosis">
+        <button onclick="addNewPatient()">Create</button>
+    </div>
+    <script>
+
+     document.getElementById('new-patient-button').addEventListener('click', () => openPopup('new-patient-popup'));
+     function openPopup(popupId) {
+            document.getElementById(popupId).classList.add('active');
+        }
+
+     function closePopup(popupId) {
+            document.getElementById(popupId).classList.remove('active');
+        }
+    
+    
+        // Search Functionality
+        document.getElementById('search-submit').addEventListener('click', async () => {
+        const FirstName = document.getElementById('search-first-name').value.trim();
+        const LastName = document.getElementById('search-last-name').value.trim();
+
+    try {
+        const token = localStorage.getItem('token');
+        const queryParams = new URLSearchParams({
+            FirstName: FirstName || '', // Ensure no null/undefined values
+            LastName: LastName || ''
+            }).toString();
+        
+        console.log(`/api/patients/search?${queryParams}`);
+        const response = await fetch(`/api/patients/search?${queryParams}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const results = await response.json();
+            const tbody = document.getElementById('search-results').querySelector('tbody');
+            tbody.innerHTML = ''; // Clear previous results
+
+            if (results.length > 0) {
+                results.forEach(patient => {
+                    const row = `<tr onclick="viewPatient(${patient.PatientId})">
+                        <td>${patient.FirstName}</td>
+                        <td>${patient.LastName}</td>
+                    </tr>`;
+                    tbody.innerHTML += row;
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="2">No results found</td></tr>';
+            }
+        }else {
+                    alert('Search failed.');
+                }
+            } catch (error) {
+                console.error('Error searching patients:', error);
+            }
+        });
+
+        //View Patient Details
+        function viewPatient(patientId) {
+           window.location.href = `patient-details.html?id=${patientId}`;
+        }
+
+        // Add New Patient
+        async function addNewPatient() {
+
+            const requiredFields = {
+                FirstName: document.getElementById('patient-first-name').value,
+                LastName: document.getElementById('patient-last-name').value,
+                DateOfBirth: document.getElementById('patient-dob').value,
+                Gender: document.getElementById('patient-gender').value,
+                PhoneNumber: document.getElementById('patient-phone').value,
+                Address: document.getElementById('patient-address').value
+    };
+            const patientData = {
+                FirstName: document.getElementById('patient-first-name').value,
+                LastName: document.getElementById('patient-last-name').value,
+                DateOfBirth: document.getElementById('patient-dob').value,
+                Gender: document.getElementById('patient-gender').value,
+                PhoneNumber: document.getElementById('patient-phone').value,
+                Address: document.getElementById('patient-address').value,
+                Allergies: document.getElementById('patient-allergies').value,
+                Prescriptions: document.getElementById('patient-prescritptions').value,
+                Height: document.getElementById('patient-height').value,
+                Weight: document.getElementById('patient-weight').value,
+                Notes: document.getElementById('patient-notes').value,
+                Diagnosis: document.getElementById('patient-diagnosis').value
+            };  
+
+            if (Object.values(patientData).some(value => value.trim() === '')) {
+                alert('Please fill out all required fields.');
+            return;
+    }
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/patients', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify(patientData)
+                });
+
+                if (response.ok) {
+                    alert('Patient added successfully!');
+                    closePopup('new-patient-popup');
+                } else {
+                    alert('Failed to add patient.');
+                }
+            } catch (error) {
+                console.error('Error adding patient:', error);
+            }
+        }
+    </script>
+</body>
+</html>

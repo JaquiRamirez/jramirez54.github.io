@@ -1,0 +1,11 @@
+[
+    {
+      "StaffID": 1,
+      "FirstName": "Dave",
+      "LastName": "Delarosa",
+      "Email": "ddelarosa4@twu.edu",
+      "Password": "PatientTracker", 
+      "Role": "Developer"
+    }
+    
+  ]
